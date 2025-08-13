@@ -1,20 +1,24 @@
 package main
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
+	"github.com/gomes800/go-products-api/internal/adapter/db"
+	"github.com/gomes800/go-products-api/internal/adapter/http"
+	"github.com/gomes800/go-products-api/internal/domain"
+	"github.com/gomes800/go-products-api/internal/usecase"
 )
 
 func main() {
 
-	server := gin.Default()
+	database := db.SetupDB()
 
-	server.GET("/ping", func(ctx *gin.Context) {
-		ctx.JSON(http.StatusOK, gin.H{
-			"message": "pong",
-		})
-	})
+	database.AutoMigrate(&domain.Product{})
 
-	server.Run()
+	repo := db.NewProductRepository(database)
+	uc := usecase.NewProductUseCase(repo)
+
+	r := gin.Default()
+	http.NewProductHandler(r, uc)
+
+	r.Run(":8080")
 }
